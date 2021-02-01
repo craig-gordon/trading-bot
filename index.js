@@ -41,12 +41,28 @@ const ends = [];
         return crypto.createHmac('sha256', secret).update(orderedParams).digest('hex');
     };
 
-    const walletParams = JSON.parse(JSON.stringify(baseParams));
-    walletParams.coin = 'BTC';
-    const walletSign = getSignature(walletParams, secret);
+    const walletBalanceParams = JSON.parse(JSON.stringify(baseParams));
+    walletBalanceParams.coin = 'BTC';
+    const walletBalanceSignature = getSignature(walletBalanceParams, secret);
 
-    axios.get(`https://api.bybit.com/v2/private/wallet/balance?api_key=${apiKey}&coin=BTC&timestamp=${timestamp}&sign=${walletSign}`)
+    axios.get(`https://api.bybit.com/v2/private/wallet/balance?api_key=${apiKey}&coin=BTC&timestamp=${timestamp}&sign=${walletBalanceSignature}`)
         .then(res => console.log('wallet data:', res.data));
+
+    const createOrderParams = JSON.parse(JSON.stringify(baseParams));
+    createOrderParams.symbol = 'BTCUSD';
+    createOrderParams.side = 'Buy';
+    createOrderParams.order_type = 'Market';
+    createOrderParams.qty = 1;
+    createOrderParams.time_in_force = 'GoodTillCancel';
+    // createOrderParams.price = 10000;
+    createOrderParams.sign = getSignature(createOrderParams, secret);
+
+    axios.post(
+        `https://api.bybit.com/v2/private/order/create`,
+        createOrderParams
+    )
+        .then(res => console.log('submit order data:', res.data))
+        .catch(err => console.log('submit order error:', err));
 
     ws.on(
         'open',
@@ -54,12 +70,13 @@ const ends = [];
             console.log('websocket connected');
 
             const expires = Date.now() + 1000;
-            const socketAuthParams = JSON.parse(JSON.stringify(baseParams));
-            socketAuthParams.symbol = 'BTCUSD';
-            const socketAuthSign = getSignature(socketAuthParams, secret);
+
+            const klineSocketParams = JSON.parse(JSON.stringify(baseParams));
+            klineSocketParams.symbol = 'BTCUSD';
+            const klineSocketSignature = getSignature(klineSocketParams, secret);
 
             ws.send(
-                `{"op":"auth","args":["${process.env.ApiPrivateKey}","${expires}","${socketAuthSign}"]}`,
+                `{"op":"auth","args":["${process.env.ApiPrivateKey}","${expires}","${klineSocketSignature}"]}`,
                 (res) => console.log('connection authenticated:', res)
             );
 
