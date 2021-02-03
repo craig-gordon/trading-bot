@@ -47,6 +47,9 @@ const ends = [];
 
     axios.get(`https://api.bybit.com/v2/private/wallet/balance?api_key=${apiKey}&coin=BTC&timestamp=${timestamp}&sign=${walletBalanceSignature}`)
         .then(res => console.log('wallet data:', res.data));
+        
+    axios.get(`https://api.bybit.com/v2/public/kline/list?symbol=BTCUSD&interval=240&from=1584734400`)
+        .then(res => console.log('4h kline data:', res.data));
 
     // const createOrderParams = JSON.parse(JSON.stringify(baseParams));
     // createOrderParams.symbol = 'BTCUSD';
@@ -64,44 +67,40 @@ const ends = [];
     //     .then(res => console.log('submit order data:', res.data))
     //     .catch(err => console.log('submit order error:', err));
 
-    const createStopOrderParams = JSON.parse(JSON.stringify(baseParams));
-    createStopOrderParams.symbol = 'BTCUSD';
-    createStopOrderParams.side = 'Sell';
-    createStopOrderParams.order_type = 'Market';
-    createStopOrderParams.qty = 1;
-    createStopOrderParams.base_price = 20000;
-    createStopOrderParams.stop_px = 19999;
-    createStopOrderParams.time_in_force = 'GoodTillCancel';
-    createStopOrderParams.close_on_trigger = true;
-    createStopOrderParams.sign = getSignature(createStopOrderParams, secret);
+    // const createStopOrderParams = JSON.parse(JSON.stringify(baseParams));
+    // createStopOrderParams.symbol = 'BTCUSD';
+    // createStopOrderParams.side = 'Sell';
+    // createStopOrderParams.order_type = 'Market';
+    // createStopOrderParams.qty = 1;
+    // createStopOrderParams.base_price = 20000;
+    // createStopOrderParams.stop_px = 19999;
+    // createStopOrderParams.time_in_force = 'GoodTillCancel';
+    // createStopOrderParams.close_on_trigger = true;
+    // createStopOrderParams.sign = getSignature(createStopOrderParams, secret);
 
-    axios.post(
-        `https://api.bybit.com/v2/private/stop-order/create`,
-        createStopOrderParams
-    )
-        .then(res => console.log('submit order data:', res.data))
-        .catch(err => console.log('submit order error:', err));
+    // axios.post(
+    //     `https://api.bybit.com/v2/private/stop-order/create`,
+    //     createStopOrderParams
+    // )
+    //     .then(res => console.log('submit order data:', res.data))
+    //     .catch(err => console.log('submit order error:', err));
 
     ws.on(
         'open',
         () => {
             console.log('websocket connected');
 
-            const expires = Date.now() + 1000;
+            pingInterval = setInterval(() => ws.send('{"op":"ping"}'), 30000);
 
-            const klineSocketParams = JSON.parse(JSON.stringify(baseParams));
-            klineSocketParams.symbol = 'BTCUSD';
-            const klineSocketSignature = getSignature(klineSocketParams, secret);
+            // const expires = Date.now() + 1000;
 
-            ws.send(
-                `{"op":"auth","args":["${process.env.ApiPrivateKey}","${expires}","${klineSocketSignature}"]}`,
-                (res) => console.log('connection authenticated:', res)
-            );
+            // const klineSocketParams = JSON.parse(JSON.stringify(baseParams));
+            // klineSocketParams.symbol = 'BTCUSD';
+            // const klineSocketSignature = getSignature(klineSocketParams, secret);
 
-            ws.send(
-                '{"op":"subscribe", "args": ["klineV2.1.BTCUSD"]}',
-                () => console.log('connected to kline data')
-            );
+            // ws.send(`{"op":"auth","args":["${process.env.ApiPrivateKey}","${expires}","${klineSocketSignature}"]}`);
+
+            ws.send('{"op":"subscribe", "args": ["klineV2.1.BTCUSD"]}');
         }
     );
 
@@ -141,6 +140,8 @@ const ends = [];
                         tulind.indicators.rsi.indicator([closes], [14], (err, results) => console.log('RSI value:', results[0], results[1]))
                     }
                 }
+            } else {
+                console.log('message:', message);
             }
         }
     );
