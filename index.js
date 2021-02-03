@@ -48,18 +48,36 @@ const ends = [];
     axios.get(`https://api.bybit.com/v2/private/wallet/balance?api_key=${apiKey}&coin=BTC&timestamp=${timestamp}&sign=${walletBalanceSignature}`)
         .then(res => console.log('wallet data:', res.data));
 
-    const createOrderParams = JSON.parse(JSON.stringify(baseParams));
-    createOrderParams.symbol = 'BTCUSD';
-    createOrderParams.side = 'Buy';
-    createOrderParams.order_type = 'Market';
-    createOrderParams.qty = 1;
-    createOrderParams.time_in_force = 'GoodTillCancel';
-    // createOrderParams.price = 10000;
-    createOrderParams.sign = getSignature(createOrderParams, secret);
+    // const createOrderParams = JSON.parse(JSON.stringify(baseParams));
+    // createOrderParams.symbol = 'BTCUSD';
+    // createOrderParams.side = 'Buy';
+    // createOrderParams.order_type = 'Market';
+    // createOrderParams.qty = 1;
+    // createOrderParams.time_in_force = 'GoodTillCancel';
+    // // createOrderParams.price = 10000;
+    // createOrderParams.sign = getSignature(createOrderParams, secret);
+
+    // axios.post(
+    //     `https://api.bybit.com/v2/private/order/create`,
+    //     createOrderParams
+    // )
+    //     .then(res => console.log('submit order data:', res.data))
+    //     .catch(err => console.log('submit order error:', err));
+
+    const createStopOrderParams = JSON.parse(JSON.stringify(baseParams));
+    createStopOrderParams.symbol = 'BTCUSD';
+    createStopOrderParams.side = 'Sell';
+    createStopOrderParams.order_type = 'Market';
+    createStopOrderParams.qty = 1;
+    createStopOrderParams.base_price = 20000;
+    createStopOrderParams.stop_px = 19999;
+    createStopOrderParams.time_in_force = 'GoodTillCancel';
+    createStopOrderParams.close_on_trigger = true;
+    createStopOrderParams.sign = getSignature(createStopOrderParams, secret);
 
     axios.post(
-        `https://api.bybit.com/v2/private/order/create`,
-        createOrderParams
+        `https://api.bybit.com/v2/private/stop-order/create`,
+        createStopOrderParams
     )
         .then(res => console.log('submit order data:', res.data))
         .catch(err => console.log('submit order error:', err));
